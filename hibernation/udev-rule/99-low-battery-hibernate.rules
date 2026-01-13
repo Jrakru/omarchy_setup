@@ -1,0 +1,34 @@
+# udev rule for automatic hibernation on critical battery level
+#
+# This rule will automatically hibernate the system when battery reaches
+# critically low levels, preventing data loss when battery runs out.
+#
+# Installation:
+#   sudo cp 99-low-battery-hibernate.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules
+#   sudo udevadm trigger
+#
+# Note: This rule requires hibernation to be properly configured:
+#   - Swap file >= RAM size (e.g., 36GB swap for 32GB RAM)
+#   - GRUB resume parameters configured
+#   - Test hibernation manually: sudo systemctl hibernate
+#
+# Customization:
+#   - Change [0-5] to [0-3] for 3% threshold
+#   - Change [0-5] to [0-10] for 10% threshold
+#   - Remove "ATTR{status}==\"Discharging\"" to also trigger on AC
+#
+# Troubleshooting:
+#   - Test rule with: udevadm monitor --property
+#   - Check logs: journalctl -u systemd-udevd
+#   - Verify trigger: cat /sys/class/power_supply/BAT0/capacity
+
+# Hibernate when battery reaches 5% or lower while discharging
+# Matches battery capacity values: 0, 1, 2, 3, 4, 5
+SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-5]", RUN+="/usr/bin/systemctl hibernate"
+
+# Alternative: Hibernate at 3% or lower (uncomment to use)
+# SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-3]", RUN+="/usr/bin/systemctl hibernate"
+
+# Alternative: Hibernate at 10% or lower (uncomment to use)
+# SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-9]|10", RUN+="/usr/bin/systemctl hibernate"
